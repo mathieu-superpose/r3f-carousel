@@ -12,7 +12,7 @@ function Experience() {
         <Canvas>
           <Environment />
 
-          <Carousel />
+          <Carousel modelUrl={"running.glb"} />
         </Canvas>
       </div>
     </div>

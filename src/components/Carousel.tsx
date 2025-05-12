@@ -1,32 +1,23 @@
-import { useRef } from "react"
-import * as THREE from "three"
-import { useFrame } from "@react-three/fiber"
+// import { useRef } from "react"
+// import * as THREE from "three"
+// import { useFrame } from "@react-three/fiber"
 
-const ROTATION_SPEED = 4
+import { useAnimations, useGLTF } from "@react-three/drei"
+import { useEffect } from "react"
 
-function Carousel() {
-  const modelRef = useRef<THREE.Mesh>(null)
+function Carousel({ modelUrl }: { modelUrl: string }) {
+  const { scene, animations } = useGLTF(modelUrl)
+  const { actions } = useAnimations(animations, scene)
 
-  useFrame((_state, delta) => {
-    if (!modelRef.current) {
-      return null
+  useEffect(() => {
+    // automatically play the first animation
+    if (actions && Object.keys(actions).length > 0) {
+      const firstAction = actions[Object.keys(actions)[0]]
+      firstAction?.play()
     }
+  }, [actions])
 
-    const model = modelRef.current
-
-    model.rotation.y += delta * 0.35 * ROTATION_SPEED
-    model.rotation.x += delta * 0.22 * ROTATION_SPEED
-    model.rotation.z += delta * 0.14 * ROTATION_SPEED
-  })
-
-  return (
-    <>
-      <mesh ref={modelRef}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="orange" />
-      </mesh>
-    </>
-  )
+  return <primitive object={scene} />
 }
 
 export default Carousel
