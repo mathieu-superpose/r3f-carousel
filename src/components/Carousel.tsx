@@ -1,17 +1,25 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useAnimations, useGLTF } from "@react-three/drei"
 import { SkeletonUtils } from "three/examples/jsm/Addons.js"
+import { useFrame } from "@react-three/fiber"
+
+import * as THREE from "three"
+
+import { TIME_SCALE, PLATFORM_SPEED } from "../stores/scene"
+
 
 function Model({
   index,
   count,
   angle,
   url,
+  setDuration,
 }: {
   index: number
   count: number
   angle: number
   url: string
+  setDuration: (duration: number) => void
 }) {
   const group = useRef(null)
   const { scene, animations } = useGLTF(url)
@@ -33,9 +41,11 @@ function Model({
     const clip = firstAction.getClip()
     const duration = clip.duration
 
+    setDuration(duration)
+
     const firstActionStartTime = (duration * index) / count
     firstAction.time = firstActionStartTime
-    firstAction.timeScale = 0.45
+    firstAction.timeScale = TIME_SCALE
 
     firstAction.play()
   }, [])
@@ -54,6 +64,43 @@ function Model({
   )
 }
 
+
+function Platform({ count, duration }: { count: number; duration: number }) {
+  const platformRef = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (!platformRef.current) {
+      return
+    }
+
+    const time = state.clock.getElapsedTime()
+
+    if (duration === 0) {
+      // console.error("Duration is 0, cannot calculate offset")
+      return
+    }
+
+    const offset = PLATFORM_SPEED * 2 * Math.PI * time / duration
+    platformRef.current.rotation.y = offset
+  })
+
+  return (
+    <group ref={platformRef}>
+      <mesh position={[count, 0, 0]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="white" />
+      </mesh>
+
+      <mesh position={[0, (-count * 0.1) / 2, 0]}>
+        <cylinderGeometry
+          args={[(count * 10) / 11, (count * 10) / 11, count * 0.1, count]}
+        />
+        <meshStandardMaterial color="white" />
+      </mesh>
+    </group>
+  )
+}
+
 function Carousel({
   modelUrl,
   modelCount,
@@ -61,6 +108,8 @@ function Carousel({
   modelUrl: string
   modelCount: number
 }) {
+  const [duration, setDuration] = useState(0)
+
   const models = useMemo(() => {
     const models = []
 
@@ -74,6 +123,7 @@ function Carousel({
           count={modelCount}
           angle={angle * i}
           url={modelUrl}
+          setDuration={setDuration}
         />
       )
       models.push(model)
@@ -82,7 +132,12 @@ function Carousel({
     return models
   }, [modelCount])
 
-  return <group dispose={null}>{models}</group>
+  return (
+    <group dispose={null}>
+      {models}
+      {duration ? <Platform count={modelCount} duration={duration} /> : null}
+    </group>
+  )
 }
 
 export default Carousel
