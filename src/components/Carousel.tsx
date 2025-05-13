@@ -23,8 +23,6 @@ function Model({
   }, [angle])
 
   useEffect(() => {
-    console.log(index, angle)
-
     const firstAction = Object.values(actions)[0]
 
     if (!firstAction) {
@@ -32,13 +30,15 @@ function Model({
       return
     }
 
-    const firstActionStartTime = (firstAction?.time * index) / count
+    const clip = firstAction.getClip()
+    const duration = clip.duration
+
+    const firstActionStartTime = (duration * index) / count
+    firstAction.time = firstActionStartTime
+    firstAction.timeScale = 0.45
 
     firstAction.play()
-    // firstAction.time = firstActionStartTime
-
-    firstAction.timeScale = 0.1
-  }, [actions, index, count])
+  }, [])
 
   return (
     <primitive
